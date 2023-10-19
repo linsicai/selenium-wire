@@ -21,6 +21,7 @@ MITM_UPSTREAM_CUSTOM_AUTH = 'upstream_custom_auth'
 MITM_NO_PROXY = 'no_proxy'
 
 
+# 获取上游代理
 def get_upstream_proxy(options):
     """Get the upstream proxy configuration from the options dictionary.
     This will be overridden with any configuration found in the environment
@@ -41,12 +42,14 @@ def get_upstream_proxy(options):
     """
     proxy_options = (options or {}).pop('proxy', {})
 
+    # 取环境变量
     http_proxy = os.environ.get('HTTP_PROXY')
     https_proxy = os.environ.get('HTTPS_PROXY')
     no_proxy = os.environ.get('NO_PROXY')
 
     merged = {}
 
+    # 合并环境变量参数
     if http_proxy:
         merged['http'] = http_proxy
     if https_proxy:
@@ -54,18 +57,22 @@ def get_upstream_proxy(options):
     if no_proxy:
         merged['no_proxy'] = no_proxy
 
+    # 合并参数
     merged.update(proxy_options)
 
+    # no proxy 转列表
     no_proxy = merged.get('no_proxy')
     if isinstance(no_proxy, str):
         merged['no_proxy'] = [h.strip() for h in no_proxy.split(',')]
 
+    # 配置类
     conf = namedtuple('ProxyConf', 'scheme username password hostport')
 
     for proxy_type in ('http', 'https'):
         # Parse the upstream proxy URL into (scheme, username, password, hostport)
         # for ease of access.
         if merged.get(proxy_type) is not None:
+            # 参数解析
             merged[proxy_type] = conf(*_parse_proxy(merged[proxy_type]))
 
     return merged

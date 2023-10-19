@@ -12,6 +12,7 @@ from seleniumwire.utils import build_proxy_args, extract_cert_and_key, get_upstr
 
 logger = logging.getLogger(__name__)
 
+# 默认值
 DEFAULT_VERIFY_SSL = False
 DEFAULT_STREAM_WEBSOCKETS = True
 DEFAULT_SUPPRESS_CONNECTION_ERRORS = True
@@ -21,27 +22,35 @@ class MitmProxy:
     """Run and manage a mitmproxy server instance."""
 
     def __init__(self, host, port, options):
+        # 选项
         self.options = options
 
         # Used to stored captured requests
+        # 存储
         self.storage = storage.create(**self._get_storage_args())
         extract_cert_and_key(self.storage.home_dir, cert_path=options.get('ca_cert'), key_path=options.get('ca_key'))
 
         # Used to modify requests/responses passing through the server
         # DEPRECATED. Will be superceded by request/response interceptors.
+        # 请求改写器
         self.modifier = RequestModifier()
 
         # The scope of requests we're interested in capturing.
+        # 域？
         self.scopes = []
 
+        # 请求和响应拦截器
         self.request_interceptor = None
         self.response_interceptor = None
 
+        # 事件循环
         self._event_loop = asyncio.new_event_loop()
 
+        # 代理
         mitmproxy_opts = Options()
 
-        self.master = Master(self._event_loop, mitmproxy_opts)
+        # master 与插件
+        self.master = Master(self._event_loop, mitmproxy_opts) 
         self.master.addons.add(*addons.default_addons())
         self.master.addons.add(SendToLogger())
         self.master.addons.add(InterceptRequestHandler(self))
@@ -76,10 +85,13 @@ class MitmProxy:
 
     def shutdown(self):
         """Shutdown the server and perform any cleanup."""
+        # 关闭服务
         self.master.shutdown()
+        # 清理缓存
         self.storage.cleanup()
 
     def _get_storage_args(self):
+        # 获取存储参数
         storage_args = {
             'memory_only': self.options.get('request_storage') == 'memory',
             'base_dir': self.options.get('request_storage_base_dir'),
@@ -92,4 +104,5 @@ class MitmProxy:
 class SendToLogger:
     def log(self, entry):
         """Send a mitmproxy log message through our own logger."""
+        # 写日志
         getattr(logger, entry.level.replace('warn', 'warning'), logger.info)(entry.msg)

@@ -19,12 +19,16 @@ def standalone_proxy(port=0, addr='127.0.0.1'):
     )
 
     # Configure shutdown handlers
+    # 注册清理函数
     signal.signal(signal.SIGTERM, lambda *_: b.shutdown())
     signal.signal(signal.SIGINT, lambda *_: b.shutdown())
 
 
 if __name__ == '__main__':
+    # 默认参数
     commands = {'extractcert': utils.extract_cert, 'standaloneproxy': standalone_proxy}
+
+    # 配置参数解析器 
     parser = argparse.ArgumentParser(
         description='\n\nsupported commands: \n  %s' % '\n  '.join(sorted(commands)),
         formatter_class=RawDescriptionHelpFormatter,
@@ -38,10 +42,12 @@ if __name__ == '__main__':
         default=None,
     )
 
+    # 解析参数
     args = parser.parse_args()
     pargs = [arg for arg in args.args if '=' not in arg and arg is not args.command]
     kwargs = dict([tuple(arg.split('=')) for arg in args.args if '=' in arg])
 
+    # 执行命令
     try:
         commands[args.command](*pargs, **kwargs)
     except KeyError:
